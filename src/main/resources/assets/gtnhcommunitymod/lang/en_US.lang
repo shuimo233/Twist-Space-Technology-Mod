@@ -2354,3 +2354,5 @@ CheckRecipeResult.NotEnoughWater=Not enough water has been input.
 cropsnh_crops.purpleMagnolia=Purple Magnolia
 OutOfMaintenance=§c§l OUT OF MAINTENANCE !
 GT5U.gui.text.recipe_result.no_machine=No machine!
+gt.circuitcomponent.processed.chipopticalsoc=Resonant Gravitational Constraint Optical Quantum Crystal
+gt.circuitcomponent.bolt.processed.infinity=Packaged Infinity Bolt

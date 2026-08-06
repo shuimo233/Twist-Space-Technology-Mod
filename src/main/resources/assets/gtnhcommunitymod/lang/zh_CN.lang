@@ -2354,3 +2354,5 @@ CheckRecipeResult.NotEnoughWater=没有输入足够的水
 cropsnh_crops.purpleMagnolia=紫玉兰
 OutOfMaintenance=§c§l不再维护！
 GT5U.gui.text.recipe_result.no_machine=没有机器
+gt.circuitcomponent.processed.chipopticalsoc=谐振引力约束光量子晶体
+gt.circuitcomponent.bolt.processed.infinity=盒装无尽螺栓
