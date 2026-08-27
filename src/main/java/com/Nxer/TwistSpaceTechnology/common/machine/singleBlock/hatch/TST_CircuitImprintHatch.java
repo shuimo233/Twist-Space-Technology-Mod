@@ -7,7 +7,6 @@ import java.util.HashSet;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import com.Nxer.TwistSpaceTechnology.util.TextEnums;
@@ -129,26 +128,13 @@ public class TST_CircuitImprintHatch extends MTEHatch implements IAddUIWidgets {
     }
 
     @Override
-    public void loadNBTData(NBTTagCompound aNBT) {
-        super.loadNBTData(aNBT);
-        if (aNBT.getByte("mCircuitUpdated") != 1) {
-            refreshImprint();
-        }
-    }
-
-    @Override
-    public void saveNBTData(NBTTagCompound aNBT) {
-        super.saveNBTData(aNBT);
-        aNBT.setByte("mCircuitUpdated", (byte) 1);
-    }
-
-    @Override
     public void setInventorySlotContents(int aIndex, ItemStack aStack) {
         super.setInventorySlotContents(aIndex, aStack);
         refreshImprint();
     }
 
     public HashSet<TST_ItemID> getStoredCircuitImprints() {
+        refreshImprint();
         return circuitType;
     }
 
