@@ -12,6 +12,7 @@ import static gregtech.api.util.GTUtility.filterValidMTEs;
 import static gregtech.api.util.GlassTier.getGlassBlockTier;
 import static net.minecraft.util.StatCollector.translateToLocal;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -193,7 +194,7 @@ public class TST_CleanRoom extends GTCM_MultiMachineBase<TST_CleanRoom>
             var c = filterValidMTEs(mInputBusses);
             var d = filterValidMTEs(mOutputBusses);
             boolean item_me = true;
-            boolean fluid_me = true; // GT 5.09.54 (GTNH 2.9.0-beta2): no-arg canDumpFluidToME() removed from machine base class
+            boolean fluid_me = canDumpFluidToMECompat();
             if ((a.size() != b.size() && (!item_me)) || (c.size() != d.size() && (!fluid_me))) {
                 stopMachine();
             }
@@ -223,6 +224,21 @@ public class TST_CleanRoom extends GTCM_MultiMachineBase<TST_CleanRoom>
         }
 
         return SimpleCheckRecipeResult.ofSuccess("running fine");
+    }
+
+    private boolean canDumpFluidToMECompat() {
+        for (Class<?>[] parameterTypes : new Class<?>[][] { {}, { List.class } }) {
+            try {
+                Method method = getClass().getMethod("canDumpFluidToME", parameterTypes);
+                Object[] arguments = parameterTypes.length == 0 ? new Object[0] : new Object[] { Collections.emptyList() };
+                return (boolean) method.invoke(this, arguments);
+            } catch (NoSuchMethodException ignored) {
+                // Try the signature from the other GT version.
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to query GT fluid void protection", e);
+            }
+        }
+        return true;
     }
 
     // region Block identification

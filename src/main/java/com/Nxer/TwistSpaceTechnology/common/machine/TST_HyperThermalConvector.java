@@ -15,6 +15,7 @@ import static gregtech.api.util.GTStructureUtility.buildHatchAdder;
 import static gregtech.api.util.GTStructureUtility.ofFrame;
 import static gtPlusPlus.core.block.base.BlockBaseModular.getMaterialBlock;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -517,8 +518,8 @@ public class TST_HyperThermalConvector extends GTCM_MultiMachineBase<TST_HyperTh
         FluidStack copiedFluidStack = aLiquid.copy();
         List<MTEHatchOutput> targetHatches = Collections
             .singletonList(isSteam(aLiquid) ? mSteamHatch : mColdFluidHatch);
-        if (!dumpFluid(targetHatches, copiedFluidStack, true)) {
-            dumpFluid(targetHatches, copiedFluidStack, false);
+        if (!dumpFluidCompat(targetHatches, copiedFluidStack, true)) {
+            dumpFluidCompat(targetHatches, copiedFluidStack, false);
         }
         // FluidEjectionHelper ejectionHelper = new FluidEjectionHelper(targetHatches, protectsExcessFluid());
         // ejectionHelper.ejectStack(copiedFluidStack);
@@ -610,14 +611,22 @@ public class TST_HyperThermalConvector extends GTCM_MultiMachineBase<TST_HyperTh
         return tt;
     }
 
-    // GT 5.09.54: dumpFluid(List,FluidStack,boolean) removed from GT machine base class (moved into
-    // MEOutputHatchTransaction). Reimplemented: push the fluid into the first target output hatch.
-    public boolean dumpFluid(List<?> targetHatches, FluidStack aLiquid, boolean simulate) {
-        if (targetHatches.isEmpty()) return false;
-        Object hatch = targetHatches.get(0);
-        if (hatch instanceof MTEHatchOutput) {
-            return ((MTEHatchOutput) hatch).fill(aLiquid.copy(), !simulate) > 0;
+    private boolean dumpFluidCompat(List<MTEHatchOutput> targetHatches, FluidStack aLiquid, boolean simulate) {
+        Class<?> type = getClass().getSuperclass();
+        while (type != null) {
+            try {
+                Method method = type.getDeclaredMethod("dumpFluid", List.class, FluidStack.class, boolean.class);
+                method.setAccessible(true);
+                return (boolean) method.invoke(null, targetHatches, aLiquid, simulate);
+            } catch (NoSuchMethodException ignored) {
+                type = type.getSuperclass();
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to invoke the legacy GT fluid output helper", e);
+            }
         }
-        return false;
+
+        // GT 5.09.54 moved the helper into MEOutputHatchTransaction. Preserve the PR's fallback behavior.
+        if (targetHatches.isEmpty()) return false;
+        return targetHatches.get(0).fill(aLiquid.copy(), !simulate) > 0;
     }
 }

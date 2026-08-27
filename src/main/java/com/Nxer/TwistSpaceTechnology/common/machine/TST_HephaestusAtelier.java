@@ -23,6 +23,7 @@ import static gregtech.api.enums.Textures.BlockIcons.casingTexturePages;
 import static gregtech.common.misc.WirelessNetworkManager.addEUToGlobalEnergyMap;
 import static tectech.thing.casing.TTCasingsContainer.sBlockCasingsTT;
 
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -191,7 +192,7 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         logic.clear();
         logic.setMachine(this);
         logic.setRecipeMapSupplier(this::getRecipeMap);
-        logic.setVoidProtection(protectsExcessItem(), protectsExcessFluid());
+        logic.setVoidProtection(getVoidProtectionState("protectsExcessItem"), getVoidProtectionState("protectsExcessFluid"));
         logic.setBatchSize(isBatchModeEnabled() ? getMaxBatchSize() : 1);
         logic.setRecipeLocking(this, isRecipeLockingEnabled());
         logic.setAvailableVoltage(isWirelessMode() ? Long.MAX_VALUE : getMaxInputEu());
@@ -639,13 +640,14 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         return new ITexture[] { casingTexturePages[0][11] };
     }
 
-    // GT 5.09.54: no-arg protectsExcessItem/protectsExcessFluid removed from GT machine base classes;
-    // default semantics are 'false' (same as IVoidable default)
-    public boolean protectsExcessItem() {
-        return false;
-    }
-
-    public boolean protectsExcessFluid() {
-        return false;
+    private boolean getVoidProtectionState(String methodName) {
+        try {
+            Method method = getClass().getMethod(methodName);
+            return (boolean) method.invoke(this);
+        } catch (NoSuchMethodException ignored) {
+            return false;
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to query GT void protection through " + methodName, e);
+        }
     }
 }

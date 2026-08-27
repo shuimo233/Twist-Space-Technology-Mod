@@ -1,5 +1,6 @@
 package com.Nxer.TwistSpaceTechnology.common.modularizedMachine.modularHatches.ExecutionCores;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 
@@ -376,10 +377,16 @@ public abstract class ExecutionCoreBase extends ModularHatchBase implements IExe
     // return Collections.emptyList();
     // }
 
-    @Override
     public List<? extends IFluidStore> getFluidOutputSlots(FluidStack[] toOutput) {
         if (mainMachine instanceof IVoidable m) {
-            return m.getOutputHatches(toOutput); // GT 5.09.54 renamed getFluidOutputSlots -> getOutputHatches
+            return getFluidOutputSlotsCompat(m, toOutput);
+        }
+        return Collections.emptyList();
+    }
+
+    public List<? extends IFluidStore> getOutputHatches(FluidStack[] toOutput) {
+        if (mainMachine instanceof IVoidable m) {
+            return getFluidOutputSlotsCompat(m, toOutput);
         }
         return Collections.emptyList();
     }
@@ -400,12 +407,51 @@ public abstract class ExecutionCoreBase extends ModularHatchBase implements IExe
         return false;
     }
 
-    @Override
     public boolean canDumpFluidToME() {
         if (mainMachine instanceof IVoidable m) {
-            return m.canDumpFluidToME(Collections.emptyList()); // GT 5.09.54: canDumpFluidToME now takes List<FluidId>
+            return canDumpFluidToMECompat(m, Collections.emptyList());
         }
         return false;
+    }
+
+    public boolean canDumpFluidToME(List<GTUtility.FluidId> outputs) {
+        if (mainMachine instanceof IVoidable m) {
+            return canDumpFluidToMECompat(m, outputs);
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<? extends IFluidStore> getFluidOutputSlotsCompat(IVoidable machine, FluidStack[] toOutput) {
+        for (String methodName : new String[] { "getFluidOutputSlots", "getOutputHatches" }) {
+            try {
+                Method method = machine.getClass().getMethod(methodName, FluidStack[].class);
+                return (List<? extends IFluidStore>) method.invoke(machine, (Object) toOutput);
+            } catch (NoSuchMethodException ignored) {
+                // Try the name used by the other GT version.
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to query GT fluid output slots through " + methodName, e);
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private static boolean canDumpFluidToMECompat(IVoidable machine, List<GTUtility.FluidId> outputs) {
+        try {
+            Method method = machine.getClass().getMethod("canDumpFluidToME");
+            return (boolean) method.invoke(machine);
+        } catch (NoSuchMethodException ignored) {
+            try {
+                Method method = machine.getClass().getMethod("canDumpFluidToME", List.class);
+                return (boolean) method.invoke(machine, outputs);
+            } catch (NoSuchMethodException missingBothVersions) {
+                return false;
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to query GT beta2 ME fluid output support", e);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Failed to query GT beta1 ME fluid output support", e);
+        }
     }
 
     // endregion
