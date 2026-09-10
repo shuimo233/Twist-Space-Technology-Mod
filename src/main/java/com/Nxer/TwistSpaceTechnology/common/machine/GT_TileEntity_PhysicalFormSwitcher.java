@@ -19,6 +19,7 @@ import static gregtech.api.util.GTStructureUtility.ofFrame;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.Nxer.TwistSpaceTechnology.common.machine.multiMachineClasses.GTCM_MultiMachineBase;
 import com.Nxer.TwistSpaceTechnology.common.machine.multiMachineClasses.processingLogics.GTCM_ProcessingLogic;
+import com.Nxer.TwistSpaceTechnology.common.machine.singleBlock.hatch.GT_MetaTileEntity_Hatch_Solidify;
 import com.Nxer.TwistSpaceTechnology.common.misc.OverclockType;
 import com.Nxer.TwistSpaceTechnology.util.TextLocalization;
 import com.cleanroommc.modularui.drawable.UITexture;
@@ -143,6 +145,8 @@ public class GT_TileEntity_PhysicalFormSwitcher extends GTCM_MultiMachineBase<GT
                     return super.tryCachePossibleRecipesFromPattern(inv);
                 }
 
+                RecipeMap<?> recipeMap = getCurrentRecipeMap();
+
                 if (!inv.shouldBeCached()) {
                     return true;
                 }
@@ -153,16 +157,35 @@ public class GT_TileEntity_PhysicalFormSwitcher extends GTCM_MultiMachineBase<GT
                 }
 
                 GTDualInputPattern inputs = inv.getPatternInputs();
-                setInputItems(inputs.inputItems);
+                setInputItems(prepareCatalyst(inputs.inputItems));
                 setInputFluids(inputs.inputFluid);
-                Set<GTRecipe> recipes = findRecipeMatches(RecipeMaps.fluidSolidifierRecipes)
-                    .collect(Collectors.toSet());
+                Set<GTRecipe> recipes = findRecipeMatches(recipeMap)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+                setInputItems();
+                setInputFluids();
+
                 if (!recipes.isEmpty()) {
                     dualInvWithPatternToRecipeCache.put(inv, recipes);
                     activeDualInv = inv;
                     return true;
                 }
                 return false;
+            }
+
+            @Override
+            protected ItemStack[] prepareCatalyst(ItemStack[] inputs) {
+                if (machineMode != 0 || inputs == null || inputs.length == 0) return inputs;
+
+                ItemStack[] protectedInputs = null;
+                for (int i = 0; i < inputs.length; i++) {
+                    ItemStack input = inputs[i];
+                    if (GT_MetaTileEntity_Hatch_Solidify.isSolidifierMold(input)) {
+                        if (protectedInputs == null) protectedInputs = inputs.clone();
+                        protectedInputs[i] = input.copy();
+                    }
+                }
+                return protectedInputs == null ? inputs : protectedInputs;
             }
 
             @Override
