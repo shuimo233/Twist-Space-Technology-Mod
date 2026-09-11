@@ -94,7 +94,7 @@ public class GT_MetaTileEntity_Hatch_Solidify extends MTEHatchInputBus implement
 
         for (GTRecipe recipe : recipes) {
             for (ItemStack input : recipe.mInputs) {
-                if (input != null) {
+                if (input != null && SolidifierInputPolicy.isRecipeCatalyst(input.stackSize)) {
                     solidifierMolds.add(TST_ItemID.createNoNBT(input));
                 }
             }
