@@ -168,8 +168,7 @@ public abstract class WirelessEnergyMultiMachineBase<T extends WirelessEnergyMul
     }
 
     public CheckRecipeResult wirelessModeProcessOnce() {
-        // MTEMultiBlockBase.checkRecipe owns the recipe-processing transaction. Keeping it open across the wireless
-        // batch avoids repeatedly finalizing and reinitializing ME-aware inputs for every sub-recipe.
+        if (!isRecipeProcessing) startRecipeProcessing();
         setupProcessingLogic(processingLogic);
         setupWirelessProcessingPowerLogic(processingLogic);
 
@@ -195,6 +194,7 @@ public abstract class WirelessEnergyMultiMachineBase<T extends WirelessEnergyMul
         mOutputItems = ArrayUtils.addAll(mOutputItems, processingLogic.getOutputItems());
         mOutputFluids = ArrayUtils.addAll(mOutputFluids, processingLogic.getOutputFluids());
 
+        endRecipeProcessing();
         return result;
     }
 
