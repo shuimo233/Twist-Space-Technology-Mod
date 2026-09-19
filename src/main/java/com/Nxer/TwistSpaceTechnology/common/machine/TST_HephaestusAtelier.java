@@ -98,7 +98,6 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
     protected int maxProcessNormalModeFurnace = 0;
     protected long maxEut = 0;
     protected UUID ownerUUID;
-    protected boolean startRecipeProcessing = false;
 
     @Override
     public int totalMachineMode() {
@@ -135,7 +134,6 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         aNBT.setInteger("coilTier", coilTier);
         aNBT.setInteger("maxProcessNormalModeFurnace", maxProcessNormalModeFurnace);
         aNBT.setLong("maxEut", maxEut);
-        aNBT.setBoolean("startRecipeProcessing", startRecipeProcessing);
     }
 
     @Override
@@ -145,7 +143,6 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         coilTier = aNBT.getInteger("coilTier");
         maxProcessNormalModeFurnace = aNBT.getInteger("maxProcessNormalModeFurnace");
         maxEut = aNBT.getLong("maxEut");
-        startRecipeProcessing = aNBT.getBoolean("startRecipeProcessing");
     }
 
     @Override
@@ -234,8 +231,9 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         long usedEU = 0;
         CheckRecipeResult powerOff = CheckRecipeResultRegistry.SUCCESSFUL;
 
+        // MTEMultiBlockBase.checkRecipe owns the recipe-processing transaction. Keep it open for the whole batch so
+        // ME-aware inputs are committed once instead of being disconnected and reconnected for every sub-recipe.
         while (true) {
-            tryStartRecipeProcessing();
             CheckRecipeResult r = doCheckRecipe();
             if (!r.wasSuccessful()) break;
 
@@ -264,7 +262,6 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
             }
 
             outputs.addAll(Arrays.asList(processingLogic.getOutputItems()));
-            endRecipeProcessing();
         }
 
         updateSlots();
@@ -286,22 +283,6 @@ public class TST_HephaestusAtelier extends GTCM_MultiMachineBase<TST_HephaestusA
         mMaxProgresstime = coilTier > 2 ? DurationPerProcessing_T3Coil_Wireless_HephaestusAtelier
             : DurationPerProcessing_T2Coil_Wireless_HephaestusAtelier;
         return powerOff;
-    }
-
-    protected void tryStartRecipeProcessing() {
-        if (!startRecipeProcessing) startRecipeProcessing();
-    }
-
-    @Override
-    public void startRecipeProcessing() {
-        startRecipeProcessing = true;
-        super.startRecipeProcessing();
-    }
-
-    @Override
-    public void endRecipeProcessing() {
-        startRecipeProcessing = false;
-        super.endRecipeProcessing();
     }
 
     public CheckRecipeResult checkProcessingFurnace() {
