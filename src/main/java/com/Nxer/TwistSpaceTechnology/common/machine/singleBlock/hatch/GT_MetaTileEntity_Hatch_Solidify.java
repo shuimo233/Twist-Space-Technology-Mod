@@ -7,6 +7,8 @@ import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_PIPE_COLORS;
 import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_PIPE_IN;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
@@ -45,7 +47,9 @@ import gregtech.api.interfaces.modularui.IAddUIWidgets;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchInputBus;
+import gregtech.api.recipe.RecipeMaps;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.util.GTRecipe;
 import gregtech.common.tileentities.machines.IDualInputHatch;
 import gregtech.common.tileentities.machines.IDualInputInventory;
 
@@ -54,44 +58,68 @@ public class GT_MetaTileEntity_Hatch_Solidify extends MTEHatchInputBus
     implements IAddUIWidgets, IDualInputHatch, TSTTooltipCredit {
 
     public static final HashSet<TST_ItemID> solidifierMolds = new HashSet<>();
-    static {
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Bottle.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Plate.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ingot.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Casing.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Gear.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Gear_Small.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Credit.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Nugget.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Block.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ball.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Cylinder.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Anvil.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Arrow.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rod.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Bolt.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Round.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Screw.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ring.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rod_Long.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rotor.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Turbine_Blade.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Tiny.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Small.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Medium.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Large.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Huge.get(1));
-        TST_ItemID.createNoNBT(ItemList.Shape_Mold_ToolHeadDrill.get(1));
+    private static int cachedSolidifierRecipeCount = -1;
 
-        TST_ItemID.createNoNBT(GGItemList.SingleUseFileMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseWrenchMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseCrowbarMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseWireCutterMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseHardHammerMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseSoftMalletMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseScrewdriverMold.get(1));
-        TST_ItemID.createNoNBT(GGItemList.SingleUseSawMold.get(1));
+    static {
+        Collections.addAll(
+            solidifierMolds,
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Bottle.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Plate.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ingot.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Casing.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Gear.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Gear_Small.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Credit.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Nugget.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Block.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ball.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Cylinder.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Anvil.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Arrow.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rod.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Bolt.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Round.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Screw.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Ring.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rod_Long.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Rotor.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Turbine_Blade.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Tiny.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Small.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Medium.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Large.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_Pipe_Huge.get(1)),
+            TST_ItemID.createNoNBT(ItemList.Shape_Mold_ToolHeadDrill.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseFileMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseWrenchMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseCrowbarMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseWireCutterMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseHardHammerMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseSoftMalletMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseScrewdriverMold.get(1)),
+            TST_ItemID.createNoNBT(GGItemList.SingleUseSawMold.get(1)));
     }
+
+    private static synchronized void refreshSolidifierMolds() {
+        Collection<GTRecipe> recipes = RecipeMaps.fluidSolidifierRecipes.getAllRecipes();
+        if (cachedSolidifierRecipeCount == recipes.size()) return;
+
+        for (GTRecipe recipe : recipes) {
+            for (ItemStack input : recipe.mInputs) {
+                if (input != null && input.stackSize == 0) {
+                    solidifierMolds.add(TST_ItemID.createNoNBT(input));
+                }
+            }
+        }
+        cachedSolidifierRecipeCount = recipes.size();
+    }
+
+    public static boolean isSolidifierMold(ItemStack stack) {
+        if (stack == null) return false;
+        refreshSolidifierMolds();
+        return solidifierMolds.contains(TST_ItemID.createNoNBT(stack));
+    }
+
     private final FluidStack[] mStoredFluid;
     public final FluidStackTank[] fluidTanks;
     public final int mCapacityPer;
@@ -238,7 +266,7 @@ public class GT_MetaTileEntity_Hatch_Solidify extends MTEHatchInputBus
     @Override
     public boolean allowPutStack(IGregTechTileEntity aBaseMetaTileEntity, int aIndex, ForgeDirection side,
         ItemStack aStack) {
-        return aIndex == MOLD_SLOT && solidifierMolds.contains(TST_ItemID.createNoNBT(aStack));
+        return aIndex == MOLD_SLOT && isSolidifierMold(aStack);
     }
 
     public FluidStack getFluid(int aSlot) {

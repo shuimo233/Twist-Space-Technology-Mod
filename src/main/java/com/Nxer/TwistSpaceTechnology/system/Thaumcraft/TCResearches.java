@@ -1309,7 +1309,7 @@ public class TCResearches {
                     .setPages(
                         new ResearchPage(TSTUtils.tr("tc.research_text.PRIMORDIAL_DISJUNCTUS.1")),
                         new ResearchPage(infusionRecipePrimordialDisjunctus))
-                    .setParents("ESSENTIA_DISCRETIZER")
+                    .setParents(Config.Enable_EssentiaDiscretizer ? "ESSENTIA_DISCRETIZER" : ROOT_RESEARCH)
                     .registerResearchItem();
         }
         if (Config.Enable_SkypiercerTower) {
@@ -1357,7 +1357,7 @@ public class TCResearches {
                         new ResearchPage(TSTUtils.tr("tc.research_text.SKYPIERCER_TOWER.4")))
                     // 插入图需要如下格式,且大小最好为128*128
                     // <IMG>gtnhcommunitymod:textures/icons/Thaumonomicon/Automation_Diagram_of_the_Skypiercer_Tower.png:0:0:256:256:1</IMG>
-                    .setParents("ESSENTIA_DISCRETIZER")
+                    .setParents(Config.Enable_EssentiaDiscretizer ? "ESSENTIA_DISCRETIZER" : ROOT_RESEARCH)
                     .registerResearchItem();
         }
         if (Config.Enable_InfusionMaterialDispenser) {
@@ -1393,7 +1393,7 @@ public class TCResearches {
                         new ResearchPage(TSTUtils.tr("tc.research_text.INFUSION_MATERIAL_DISPENSER.1")),
                         new ResearchPage(TSTUtils.tr("tc.research_text.INFUSION_MATERIAL_DISPENSER.2")),
                         new ResearchPage(infusionRecipeInfusionMaterialDispenser))
-                    .setParents("ESSENTIA_DISCRETIZER")
+                    .setParents(Config.Enable_EssentiaDiscretizer ? "ESSENTIA_DISCRETIZER" : ROOT_RESEARCH)
                     .registerResearchItem();
         }
 

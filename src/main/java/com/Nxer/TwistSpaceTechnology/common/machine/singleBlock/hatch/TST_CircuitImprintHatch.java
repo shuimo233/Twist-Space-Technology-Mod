@@ -151,6 +151,7 @@ public class TST_CircuitImprintHatch extends MTEHatch implements IAddUIWidgets, 
     }
 
     public HashSet<TST_ItemID> getStoredCircuitImprints() {
+        refreshImprint();
         return circuitType;
     }
 

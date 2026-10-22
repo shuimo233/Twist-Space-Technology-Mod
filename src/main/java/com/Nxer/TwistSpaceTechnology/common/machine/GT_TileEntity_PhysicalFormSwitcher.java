@@ -20,8 +20,6 @@ import static gregtech.api.util.GTStructureUtility.ofFrame;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -53,7 +51,6 @@ import gregtech.api.interfaces.metatileentity.IMetaTileEntity.SkipGenerateDescri
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.logic.ProcessingLogic;
 import gregtech.api.modularui2.GTGuiTextures;
-import gregtech.api.objects.GTDualInputPattern;
 import gregtech.api.recipe.RecipeMap;
 import gregtech.api.recipe.RecipeMaps;
 import gregtech.api.recipe.check.CheckRecipeResult;
@@ -241,31 +238,11 @@ public class GT_TileEntity_PhysicalFormSwitcher extends GTCM_MultiMachineBase<GT
 
             @Override
             public boolean tryCachePossibleRecipesFromPattern(IDualInputInventoryWithPattern inv) {
-
-                if (machineMode != 0) {
-                    return super.tryCachePossibleRecipesFromPattern(inv);
-                }
-
-                if (!inv.shouldBeCached()) {
+                if (machineMode == 0) {
+                    // Shared/manual-slot molds are merged after this pre-filter. Match the combined inputs in process().
                     return true;
                 }
-
-                if (dualInvWithPatternToRecipeCache.containsKey(inv)) {
-                    activeDualInv = inv;
-                    return true;
-                }
-
-                GTDualInputPattern inputs = inv.getPatternInputs();
-                setInputItems(inputs.inputItems);
-                setInputFluids(inputs.inputFluid);
-                Set<GTRecipe> recipes = findRecipeMatches(RecipeMaps.fluidSolidifierRecipes)
-                    .collect(Collectors.toSet());
-                if (!recipes.isEmpty()) {
-                    dualInvWithPatternToRecipeCache.put(inv, recipes);
-                    activeDualInv = inv;
-                    return true;
-                }
-                return false;
+                return super.tryCachePossibleRecipesFromPattern(inv);
             }
 
             @Override
